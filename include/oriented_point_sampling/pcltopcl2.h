@@ -9,4 +9,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-
+bool convertPointCloudToPointCloud2(const sensor_msgs::PointCloudConstPtr &cloudin, sensor_msgs::PointCloud2Ptr &PointCloud2);
+void convertPointCloudToPointCloud2(const sensor_msgs::PointCloudConstPtr &cloudin);
+bool convertPointCloud2ToPCLXYZ(const sensor_msgs::PointCloud2ConstPtr &cloudin, pcl::PointCloud<pcl::PointXYZ>::Ptr &pclPointcloud);
+void convertPointCloudToPCLXYZ(const sensor_msgs::PointCloudConstPtr &cloudin);

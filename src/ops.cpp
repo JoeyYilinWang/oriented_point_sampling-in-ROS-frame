@@ -42,10 +42,11 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ReadPCD(char* filePath)
 	return (cloud);
 }
 
+// delete the bad points.
 pcl::PointCloud<pcl::PointXYZ>::Ptr DeleteNAN(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
 {
 	std::vector<int> indices;
-	pcl::PointCloud<pcl::PointXYZ>::Ptr out;
+	pcl::PointCloud<pcl::PointXYZ>::Ptr out(new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::removeNaNFromPointCloud(*cloud, *out, indices);
 	return out;
 }

@@ -31,15 +31,3 @@ void convertPointCloudToPCLXYZ(const sensor_msgs::PointCloudConstPtr &cloudin)
     ROS_INFO("pclPointCloud converted successfully");
     return;
 }
-
-int main(int argc, char **argv)
-{
-    ros::init(argc, argv, "pclTopcl2");  
-	ros::NodeHandle n;
-    /* define a subscriber named _subCloud, and subscribe topic '/sensor_msg::PointCloud'*/
-    ros::Subscriber _subCloud;
-    _subCloud = n.subscribe<sensor_msgs::PointCloud>
-      ("/radar_pcl", 1, &convertPointCloudToPCLXYZ);
-    ros::spin();
-    return 0;
-}
