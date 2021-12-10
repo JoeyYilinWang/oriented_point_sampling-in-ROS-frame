@@ -34,7 +34,7 @@ clock_t t[100];
 pcl::PointCloud<pcl::PointXYZ>::Ptr ReadPCD(char* filePath)
 {
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-	// pcl::io library used for load PCD file 
+	// pcl::io library used for loading PCD file 
 	if (pcl::io::loadPCDFile<pcl::PointXYZ> (filePath, *cloud) == -1)
 	{
 		PCL_ERROR("Couldn't read file box_cloud.pcd \n");
@@ -144,6 +144,8 @@ cv::Mat NormalEstimation(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int pointNum
 	pointNum=pointNum*randRate;
 	//cout<<"randRate: "<<randRate<<endl;
 	//cout<<"pointNum: "<<pointNum<<endl;
+
+	// Actually, computing normal of every sampled point cost much time
 	for(int i=0; i<pointNum; i++)
 	{
 		referP.at<double>(0,0)=cloud->points[randPoints[i]].x;
@@ -201,7 +203,8 @@ simpleVis (pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud)
   //viewer->addCoordinateSystem (1.0, "global");
   viewer->initCameraParameters ();
   return (viewer);
-}*/
+}
+*/
 
 //implement one point ransac
 cv::Mat OnePointRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hori, cv::Mat horiPoints, int maxIteration, 
@@ -220,6 +223,8 @@ cv::Mat OnePointRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointClou
 		//t[12]=clock();
 		randInd=rand()%cloud_hori->points.size();
 		inliers.clear();
+
+		// The cloud means all the input cloud, or sampled point cloud? In the paper, it means sampled point cloud
 		for(int i=0; i<cloud->points.size(); i++)
 		{
 			// this code explicitly test if the point is in ranPoints
@@ -241,6 +246,8 @@ cv::Mat OnePointRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointClou
 				inliers.push_back(i);
 			}
 		}
+
+		// fitNum means theshold 
 		if (inliers.size()>fitNum)
 		{
 			inliers.push_back(randPoints[randInd]);
@@ -459,12 +466,16 @@ int main(int argc, char **argv)
 			cout<<"i="<<i<<endl;
 			cout<<normals.at<double>(i,0)<<" "<<normals.at<double>(i,1)<<" "<<normals.at<double>(i,2)<<endl;
 		}*/
+		
+		// notice this, interAngle could have same orientation as axis Y or opposite.
 		if(interAngle<=7 || interAngle>=173)
 		{
 			cv::Mat hpRow(1, 3, CV_64FC1);
 			hpRow.at<double>(0,0)=normals.at<double>(i,0);
 			hpRow.at<double>(0,1)=normals.at<double>(i,1);
 			hpRow.at<double>(0,2)=normals.at<double>(i,2);
+
+			// cloud_hori only contains horizontal points of sampled points.
 			cloud_hori->push_back(cloud->points[randPoints[i]]);
 			//indn.push_back(i);
 			//cout<<endl;
@@ -515,7 +526,7 @@ int main(int argc, char **argv)
 	//use one point ransac to find horizontal plane
 	std::vector<std::vector<int> > inliers;
 	std::vector<cv::Mat> planeModel;
-	int minNum=10000;  //the minimum number of points in the plane
+	int minNum=10000;  //the minimum number of points in the plane, it is too large!
 	//std::vector<int> isExist(cloud_hori->points.size(), 1);
 	std::vector<int> isExist(cloud->points.size(), 1);
 	
@@ -528,6 +539,8 @@ int main(int argc, char **argv)
 		//t[11]=clock();
 		//printf("%lf s\n",(double)(t[11]-t[10])/CLOCKS_PER_SEC);
 		t[10]=clock();
+
+		// cloud是全部点，cloud_hori只是采样点中的平面点，horiPoints也是采样点中平面点
 		plane=OnePointRANSAC(cloud, cloud_hori, horiPoints, horiPoints.rows, 0.99, 0.05, minNum, inl, isExist, randPoints);
 		t[11]=clock();
 		printf("OnePointRANSAC time: %lf s\n",(double)(t[11]-t[10])/CLOCKS_PER_SEC);

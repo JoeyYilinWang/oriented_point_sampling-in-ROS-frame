@@ -45,8 +45,8 @@ void PointsKNN(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int pointNum, int maxK
 				distKNN[i][j]=pointNKNSquaredDistance[j];
 			}
 			
-		}
 	}
+		}
 }
 
 //compute sigma and NWR matrix, then get the normals of the points
@@ -119,6 +119,7 @@ cv::Mat OnePointRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointClou
 		inliers.clear();
 		for(int i=0; i<cloud->points.size(); i++)
 		{
+			
 			if(i==randPoints[randInd] || isExist[i]==0)
 			{
 				continue;
