@@ -30,7 +30,7 @@ using namespace std;
 
 clock_t t[100];
 
-//read 3D points from pcd file
+//read 3D points from pcd file------------understood
 pcl::PointCloud<pcl::PointXYZ>::Ptr ReadPCD(char* filePath)
 {
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
@@ -42,7 +42,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ReadPCD(char* filePath)
 	return (cloud);
 }
 
-// delete the bad points.
+// delete the bad points. ----------------understood
 pcl::PointCloud<pcl::PointXYZ>::Ptr DeleteNAN(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
 {
 	std::vector<int> indices;
@@ -51,7 +51,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr DeleteNAN(pcl::PointCloud<pcl::PointXYZ>::Pt
 	return out;
 }
 
-//k nearest neighbor search
+//k nearest neighbor search ---------------understood
 void PointsKNN(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int pointNum, int maxK, int** indexKNN, double** distKNN)
 {
 	pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
@@ -95,6 +95,15 @@ void PointsKNN(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int pointNum, int maxK
 }
 
 //compute sigma and NWR matrix, then get the normals of the points
+/* parameter: cloud -------> all the input cloud
+   parameter: pointNum -----> the number of all cloud
+   parameter: maxK ------> the parameter of K nearest search.
+   parameter: k ----------> the meaning is same as maxK, but less than maxK
+   parameter: indexKNN --------> the array of index searched by kNN algorithm
+   parameter: distKNN ----------> the distance between reference point and the one searched by KNN algorithm
+   parameter: randRate ----------> the random rate of sampling
+   parameter: randPoints -------->  the index of sampled points
+*/
 cv::Mat NormalEstimation(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int pointNum, int maxK, int k, int** indexKNN, double** distKNN, double randRate, std::vector<int> &randPoints)
 {
 	cv::Mat diffM(3, 1, CV_64FC1);
@@ -102,8 +111,8 @@ cv::Mat NormalEstimation(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int pointNum
 	cv::Mat neighP(3, 1, CV_64FC1);
 	cv::Mat nwrSample(3, 3, CV_64FC1);
 	cv::Mat nwrMat(3, 3, CV_64FC1);
-	cv::Mat normals(pointNum*randRate, 3, CV_64FC1);
-	double sigma=0.2;
+	cv::Mat normals(pointNum*randRate, 3, CV_64FC1); // normals is actually this function's output and my concern.
+	double sigma=0.2;  // useless for this code.
 	//compute sigma
 	int nn;    //number of nonzero distance
 	/*for(int i=0; i<pointNum; i++)
@@ -131,7 +140,7 @@ cv::Mat NormalEstimation(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int pointNum
 	{
 		randPoints.push_back(i);
 	}
-	std::random_shuffle(randPoints.begin(), randPoints.end());
+	std::random_shuffle(randPoints.begin(), randPoints.end());  // shuffle the index in randPoints.
 	pointNum=pointNum*randRate;
 	//cout<<"randRate: "<<randRate<<endl;
 	//cout<<"pointNum: "<<pointNum<<endl;
@@ -142,6 +151,7 @@ cv::Mat NormalEstimation(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int pointNum
 		referP.at<double>(2,0)=cloud->points[randPoints[i]].z;
 		nwrMat=cv::Mat::zeros(cv::Size(3,3),CV_64FC1);
 		nn=0;
+		// compute the matrix for one point
 		for(int j=0; j<maxK; j++)
 		{
 			if(distKNN[randPoints[i]][j]!=0)
@@ -177,7 +187,7 @@ cv::Mat NormalEstimation(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, int pointNum
 	}
 	t[11]=clock();
 	//printf("NormalEstimation: %lf s\n",(double)(t[11]-t[10])/CLOCKS_PER_SEC);
-	return (normals);
+	return (normals); 
 }
 
 /*//Open 3D viewer and add point cloud
@@ -194,7 +204,8 @@ simpleVis (pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud)
 }*/
 
 //implement one point ransac
-cv::Mat OnePointRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hori, cv::Mat horiPoints, int maxIteration, double p, double disThreshold, int fitNum, std::vector<int> &best_inliers, std::vector<int> isExist, std::vector<int> randPoints)
+cv::Mat OnePointRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hori, cv::Mat horiPoints, int maxIteration, 
+	double p, double disThreshold, int fitNum, std::vector<int> &best_inliers, std::vector<int> isExist, std::vector<int> randPoints)
 {
 	int iter=0;
 	//plane which ransac find: planeModel is the index of the point on the plane and the plane normal
@@ -205,12 +216,13 @@ cv::Mat OnePointRANSAC(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointClou
 	double e;
 	while(iter<maxIteration)
 	{
-		//randomly select one point from horizontal points
+		//randomly select one point from horizontal points, why specify horizontal? 
 		//t[12]=clock();
 		randInd=rand()%cloud_hori->points.size();
 		inliers.clear();
 		for(int i=0; i<cloud->points.size(); i++)
 		{
+			// this code explicitly test if the point is in ranPoints
 			if(i==randPoints[randInd] || isExist[i]==0)
 			{
 				continue;
@@ -363,7 +375,7 @@ int main(int argc, char **argv)
 		}
 		myfile1.close();
 	}
-
+	
 	t[3]=clock();
 	printf("%lf s\n",(double)(t[3]-t[2])/CLOCKS_PER_SEC);
 	//k nearest neighbor search
@@ -394,6 +406,8 @@ int main(int argc, char **argv)
 	//cv::Mat normals(pointNum, 3, CV_64FC1);
 	cv::Mat normals;
 	std::vector<int> randPoints;
+
+	// only get 10% of points.
 	double randRate=0.1;
 	normals=NormalEstimation(cloud, pointNum, maxK, k, indexKNN, distKNN, randRate, randPoints);
 	/*for(int i=0; i<normals.rows; i++)
@@ -413,7 +427,6 @@ int main(int argc, char **argv)
 	printf("%lf s\n",(double)(t[5]-t[4])/CLOCKS_PER_SEC);
 
 	//cout<<normals<<endl;
-	
 	//use kmeans to find the planes
 	/*cv::Mat labels, centers;
 	cv::Mat normals_32;
@@ -435,6 +448,7 @@ int main(int argc, char **argv)
 		//compute the angle between normal and yAxis direction (0,1,0)
 		ab=normals.at<double>(i,1);
 		an=1;
+		// Y axies points up, x axies points to left, z axies point to forward.
 		bn=sqrt(normals.at<double>(i,0)*normals.at<double>(i,0)+normals.at<double>(i,1)*normals.at<double>(i,1)+normals.at<double>(i,2)*normals.at<double>(i,2));
 		cosr=ab/(an*bn);
 		//cout<<M_PI<<endl;
