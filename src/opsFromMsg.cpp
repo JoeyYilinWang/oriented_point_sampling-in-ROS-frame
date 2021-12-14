@@ -5,20 +5,22 @@ using namespace std;
 using namespace cv;
 
 const double randRate = 0.8; 
-const int maxK = 10;
+const int maxK = 30;
 const int minNum = 30;
-
+const double minDis = 0.5;
+static int planeDetect = 0;
+static int frameid = 0;
 
 void readMsgAndTackle(const sensor_msgs::PointCloudConstPtr &cloudin)
 {   
+	cout << "\n\n" << endl;
+	cout << "frameid: " << frameid << endl;
     sensor_msgs::PointCloud2Ptr PointCloud2(new sensor_msgs::PointCloud2);
     convertPointCloudToPointCloud2(cloudin, PointCloud2);
     pcl::PointCloud<pcl::PointXYZ>::Ptr pclPointcloud(new pcl::PointCloud<pcl::PointXYZ>);
     convertPointCloud2ToPCLXYZ(PointCloud2, pclPointcloud);
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
 	cloud = DeleteNAN(pclPointcloud);
-	t[2]=clock();
-	// printf("%lf s\n",(double)(t[2]-t[1])/CLOCKS_PER_SEC);
 	int pointNum=cloud->points.size();
 	cout << "After filtered bad points, the num of residual points is: " << pointNum << endl;
 
@@ -37,21 +39,11 @@ void readMsgAndTackle(const sensor_msgs::PointCloudConstPtr &cloudin)
   		distKNN[i]=new double[maxK];
 	}
 	PointsKNN(cloud, pointNum, maxK, indexKNN, distKNN);
-	t[4]=clock();
-	// printf("%lf s\n",(double)(t[4]-t[3])/CLOCKS_PER_SEC);
 	cv::Mat normals;
 	std::vector<int> randPoints;
 
 	normals=NormalEstimation(cloud, pointNum, maxK, k, indexKNN, distKNN, randRate, randPoints);
-
-	cout<<endl;
 	cout<<"Number of normals: "<<normals.rows<<endl;
-
-	t[5]=clock();
-	// printf("%lf s\n",(double)(t[5]-t[4])/CLOCKS_PER_SEC);
-
-	//find the points in horizontal plane
-	//int normals_size=1;
 	double ab, an, bn, cosr, interAngle;
 
 	cv::Mat sampledPoints;
@@ -70,22 +62,26 @@ void readMsgAndTackle(const sensor_msgs::PointCloudConstPtr &cloudin)
 	//use one point ransac to find horizontal plane
 	std::vector<std::vector<int> > inliers;
 	std::vector<cv::Mat> planeModel;
-	//std::vector<int> isExist(cloud_hori->points.size(), 1);
 	std::vector<int> isExist(cloud->points.size(), 1);
 	
 	// only output one plane
 	cv::Mat plane;
 	std::vector<int>  inl;
-	plane = OnePointRANSAC(cloud, cloud_sampled, sampledPoints, sampledPoints.rows, 0.99, 0.05, minNum, inl, isExist, randPoints);
+	plane = OnePointRANSAC(cloud, cloud_sampled, sampledPoints, sampledPoints.rows, 0.99, minDis, minNum, inl, isExist, randPoints);
 	if (countNonZero(plane) != 0)
 	{
 		cout << "plane detected" << endl;
+		planeDetect++;
+		cout << "detected plane num: " << planeDetect << endl;
 	}
-	
-	ROS_INFO("successful!!!!");
+	else
+	{
+		cout << "no plane detected " << endl;
+		cout << "detected plane num: " << planeDetect << endl;
+	}
+	frameid++;
     return;
 }
-
 
 int main(int argc, char **argv)
 {
