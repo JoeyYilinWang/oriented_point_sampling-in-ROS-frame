@@ -25,8 +25,8 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
 )
 
-# add_library(needed SHARED ${PROJECT_SOURCE_DIR}/src/lib.cpp)
-# add_library(pcltopcl2 ${PROJECT_SOURCE_DIR}/src/pcltopcl2.cpp)
+#add_library(needed SHARED ${PROJECT_SOURCE_DIR}/src/lib.cpp)
+#add_library(pcltopcl2 ${PROJECT_SOURCE_DIR}/src/pcltopcl2.cpp)
 
 link_directories(/home/joey/workspace/catkin_ws/devel/lib)
 # add_executable(cccccccconversion src/pcltopcl2.cpp) 
